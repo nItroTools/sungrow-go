@@ -2,10 +2,12 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/nItroTools/sungrow-go/ws"
 	"log"
 	"net"
 	"strings"
+	"time"
 )
 
 type inverter struct {
@@ -33,6 +35,9 @@ func main() {
 		log.Fatalln(err)
 	}
 	defer inv.ws.Close()
+
+	// Output timestamp row
+	fmt.Printf("%s%s%s%s%s\n", "time", inv.separator, time.Now().Format(time.RFC3339), inv.separator, "RFC3339")
 
 	// Fetch values from inverter
 	for _, t := range inv.types {
