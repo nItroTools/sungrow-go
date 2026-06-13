@@ -21,6 +21,7 @@ Output: `var,value,unit`
 time,2023-08-25T16:34:00+02:00,RFC3339
 sunPowerDay,3.500,kWh
 sunPowerTotal,97499.900,kWh
+deviceStatus,Netzbetrieb,
 inverterTemp,43.600,℃
 consumptionRate,57.143,%
 netFeedIn,1.500,kW
