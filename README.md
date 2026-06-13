@@ -8,13 +8,13 @@ $ go build -o ./bin/
 ```
 
 ## Usage
-List available and required parameters
+List available and required parameters:
 ```bash
 $ sungrow-go -help
 ```
-Basic usage with ip address of your inverter (e.g. `192.168.2.100`)
+Basic usage with ip address of your inverter (e.g. `192.168.2.100`) and the Sungrow WiNet-S dongle standard credentials:
 ```bash
-$ sungrow-go -ip 192.168.2.100
+$ sungrow-go -ip 192.168.2.100 -user admin -password pw8888
 ```
 Output: `var,value,unit`
 ```text

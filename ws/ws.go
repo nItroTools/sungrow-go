@@ -1,29 +1,35 @@
 package ws
 
 import (
+	"crypto/tls"
 	"fmt"
-	"github.com/google/uuid"
-	"golang.org/x/net/websocket"
 	"net"
 	"strconv"
 	"time"
+
+	"github.com/google/uuid"
+	"golang.org/x/net/websocket"
 )
 
 type WS struct {
-	ip    net.IP
-	port  int
-	path  string
-	conn  *websocket.Conn
-	token string
-	uid   string
+	ip       net.IP
+	port     int
+	user     string
+	password string
+	path     string
+	conn     *websocket.Conn
+	token    string
+	uid      string
 }
 
 // NewWS returns a new WS instance.
-func NewWS(ip net.IP, port int, path string) *WS {
+func NewWS(p ConnectionParams) *WS {
 	ws := &WS{
-		ip:   ip,
-		port: port,
-		path: path,
+		ip:       p.Ip,
+		port:     p.Port,
+		user:     p.User,
+		password: p.Password,
+		path:     p.Path,
 	}
 
 	return ws
@@ -32,9 +38,18 @@ func NewWS(ip net.IP, port int, path string) *WS {
 // Connect connects to the inverter using the WebSocket protocol.
 func (ws *WS) Connect() (err error) {
 	// Connect to WebSocket
-	origin := fmt.Sprintf("http://%s", ws.ip.String())
-	url := fmt.Sprintf("ws://%s:%d%s", ws.ip.String(), ws.port, ws.path)
-	ws.conn, err = websocket.Dial(url, "", origin)
+	origin := fmt.Sprintf("https://%s", ws.ip.String())
+	url := fmt.Sprintf("wss://%s:%d%s", ws.ip.String(), ws.port, ws.path)
+	config, err := websocket.NewConfig(url, origin)
+	if err != nil {
+		return err
+	}
+
+	config.TlsConfig = &tls.Config{
+		InsecureSkipVerify: true,
+	}
+
+	ws.conn, err = websocket.DialConfig(config)
 	if err != nil {
 		return err
 	}
@@ -56,6 +71,26 @@ func (ws *WS) Connect() (err error) {
 		ws.Close()
 		return fmt.Errorf("connected but connection request failed")
 	}
+
+	// Authenticate
+	if ws.user != "" && ws.password != "" {
+		reqAuth := RequestAuth{"de_de", ws.token, "login", ws.user, ws.password}
+		if err := websocket.JSON.Send(ws.conn, &reqAuth); err != nil {
+			return err
+		}
+		resAuth := ResponseAuth{}
+		if err := websocket.JSON.Receive(ws.conn, &resAuth); err != nil {
+			return err
+		}
+
+		if resAuth.ResultMsg != "success" {
+			ws.Close()
+			return fmt.Errorf("login request failed. Please check user/password params: %s", resAuth.ResultMsg)
+		}
+
+		ws.token = resAuth.ResultData.Token
+	}
+
 	return err
 }
 

@@ -1,6 +1,16 @@
 package ws
 
+import "net"
+
 type Keys map[string]string
+
+type ConnectionParams struct {
+	Ip       net.IP
+	Port     int
+	User     string
+	Password string
+	Path     string
+}
 
 type RequestConnect struct {
 	Lang    string `json:"lang"`
@@ -8,6 +18,24 @@ type RequestConnect struct {
 	Service string `json:"service"`
 }
 type ResponseConnect struct {
+	ResultCode int    `json:"result_code"`
+	ResultMsg  string `json:"result_msg"`
+	ResultData struct {
+		Service     string
+		Token       string
+		Uid         int
+		TipsDisable int `json:"tips_disable"`
+	} `json:"result_data"`
+}
+
+type RequestAuth struct {
+	Lang     string `json:"lang"`
+	Token    string `json:"token"`
+	Service  string `json:"service"`
+	Username string `json:"username"`
+	Passwd   string `json:"passwd"`
+}
+type ResponseAuth struct {
 	ResultCode int    `json:"result_code"`
 	ResultMsg  string `json:"result_msg"`
 	ResultData struct {

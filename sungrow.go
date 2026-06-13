@@ -3,11 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/nItroTools/sungrow-go/ws"
 	"log"
 	"net"
 	"strings"
 	"time"
+
+	"github.com/nItroTools/sungrow-go/ws"
 )
 
 type inverter struct {
@@ -15,6 +16,8 @@ type inverter struct {
 	ipS       string
 	ip        net.IP
 	port      int
+	user      string
+	password  string
 	path      string
 	data      string
 	separator string
@@ -30,7 +33,14 @@ func main() {
 	flags()
 
 	// Connect to inverter
-	inv.ws = ws.NewWS(inv.ip, inv.port, inv.path)
+	cP := ws.ConnectionParams{
+		Ip:       inv.ip,
+		Port:     inv.port,
+		User:     inv.user,
+		Password: inv.password,
+		Path:     inv.path,
+	}
+	inv.ws = ws.NewWS(cP)
 	if err := inv.ws.Connect(); err != nil {
 		log.Fatalln(err)
 	}
@@ -52,10 +62,12 @@ func main() {
 	}
 }
 
-// flags defines, parses and validates command-line flags from os.Args[1:]
+// flags define, parse and validate command-line flags from os.Args[1:]
 func flags() {
-	ipS := flag.String("ip", "", "IP address of the Sungrow inverter")
-	port := flag.Int("port", 8082, "WebSocket port of the Sungrow inverter")
+	ipS := flag.String("ip", "", "Required: IP address of the Sungrow inverter")
+	port := flag.Int("port", 443, "Secure WebSocket port of the Sungrow inverter")
+	user := flag.String("user", "", "Required: username for the Sungrow inverter web ui login, e.g. admin")
+	password := flag.String("password", "", "Required: password for the Sungrow inverter web ui login")
 	path := flag.String("path", "/ws/home/overview", "Server path from where data is requested")
 	data := flag.String("data", "pv,battery", "Select the data to be requested comma separated.\nPossible values are \"pv\" and \"battery\"")
 	separator := flag.String("separator", ",", "Output data separator")
@@ -63,6 +75,8 @@ func flags() {
 
 	inv.ipS = *ipS
 	inv.port = *port
+	inv.user = *user
+	inv.password = *password
 	inv.path = *path
 	inv.data = *data
 	inv.separator = *separator
@@ -75,6 +89,14 @@ func flags() {
 func flagsValidate() {
 	if inv.ip = net.ParseIP(inv.ipS); inv.ip == nil {
 		log.Fatalln("Required parameter 'ip' not set or invalid ip address!\n'sungrow-go -help' lists available parameters.")
+	}
+
+	if strings.TrimSpace(inv.user) == "" {
+		log.Fatalln("Required parameter 'user' not set!\n'sungrow-go -help' lists available parameters.")
+	}
+
+	if strings.TrimSpace(inv.password) == "" {
+		log.Fatalln("Required parameter 'password' not set!\n'sungrow-go -help' lists available parameters.")
 	}
 
 	inv.types = strings.Split(inv.data, ",")
