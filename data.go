@@ -16,6 +16,7 @@ var (
 		"I18N_COMMON_LOAD_TOTAL_ACTIVE_POWER":         "consumption",
 		"I18N_CONFIG_KEY_1001188":                     "consumptionRate",
 		"I18N_COMMON_AIR_TEM_INSIDE_MACHINE":          "inverterTemp",
+		"I18N_COMMON_DEVICE_STATUS":                   "deviceStatus",
 	}
 
 	batteryKeys = ws.Keys{
@@ -24,5 +25,23 @@ var (
 		"I18N_CONFIG_KEY_3921":            "batteryDischarge",
 		"I18N_COMMON_BATTARY_HEALTH":      "batteryHealth",
 		"I18N_COMMON_BATTERY_TEMPERATURE": "batteryTemp",
+	}
+
+	// deviceStatusValues maps the i18n status values of I18N_COMMON_DEVICE_STATUS
+	// to human readable German labels. Unknown values are passed through verbatim.
+	deviceStatusValues = ws.Keys{
+		"I18N_COMMON_ON_GRID_OPERATION":  "Netzbetrieb",
+		"I18N_COMMON_OFF_GRID_OPERATION": "Notstrombetrieb",
+		"I18N_COMMON_STANDBY":            "Standby",
+		"I18N_COMMON_STOP":               "Gestoppt",
+		"I18N_COMMON_FAULT":              "Fehler",
+		"I18N_COMMON_INITIALIZING":       "Initialisierung",
+		"I18N_COMMON_DERATING":           "Leistungsbegrenzung",
+	}
+
+	// pvValueKeys marks pv data fields whose data_value is itself an i18n string
+	// and maps each to its value-translation table.
+	pvValueKeys = map[string]ws.Keys{
+		"I18N_COMMON_DEVICE_STATUS": deviceStatusValues,
 	}
 )

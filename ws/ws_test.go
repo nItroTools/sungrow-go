@@ -240,12 +240,45 @@ func TestPvOutput(t *testing.T) {
 
 	keys := Keys{"I18N_KNOWN": "known", "I18N_NAN": "nan"}
 	out := captureStdout(t, func() {
-		if err := ws.Pv(keys, ","); err != nil {
+		if err := ws.Pv(keys, nil, ","); err != nil {
 			t.Fatalf("Pv() error = %v", err)
 		}
 	})
 
 	want := "known,1.500,kW\nnan,0.000,%\n"
+	if out != want {
+		t.Errorf("Pv() output = %q, want %q", out, want)
+	}
+}
+
+func TestPvDeviceStatus(t *testing.T) {
+	srv := newWSServer(t, serverConfig{rows: []realRow{
+		{"I18N_COMMON_TOTAL_DCPOWER", "1.5", "kW"},                         // numeric -> float
+		{"I18N_COMMON_DEVICE_STATUS", "I18N_COMMON_ON_GRID_OPERATION", ""}, // known status -> translated
+		{"I18N_COMMON_DEVICE_STATUS", "I18N_COMMON_XYZ", ""},               // unknown status -> raw passthrough
+	}})
+	defer srv.Close()
+
+	ws := newTestWS(t, srv, "", "")
+	if err := ws.Connect(); err != nil {
+		t.Fatalf("Connect() error = %v", err)
+	}
+	defer ws.Close()
+
+	keys := Keys{
+		"I18N_COMMON_TOTAL_DCPOWER": "sunPower",
+		"I18N_COMMON_DEVICE_STATUS": "deviceStatus",
+	}
+	valueKeys := map[string]Keys{
+		"I18N_COMMON_DEVICE_STATUS": {"I18N_COMMON_ON_GRID_OPERATION": "Netzbetrieb"},
+	}
+	out := captureStdout(t, func() {
+		if err := ws.Pv(keys, valueKeys, ","); err != nil {
+			t.Fatalf("Pv() error = %v", err)
+		}
+	})
+
+	want := "sunPower,1.500,kW\ndeviceStatus,Netzbetrieb,\ndeviceStatus,I18N_COMMON_XYZ,\n"
 	if out != want {
 		t.Errorf("Pv() output = %q, want %q", out, want)
 	}
@@ -265,7 +298,7 @@ func TestBatteryOutputSeparator(t *testing.T) {
 
 	keys := Keys{"I18N_COMMON_BATTERY_SOC": "batteryLevel"}
 	out := captureStdout(t, func() {
-		if err := ws.Battery(keys, ";"); err != nil {
+		if err := ws.Battery(keys, nil, ";"); err != nil {
 			t.Fatalf("Battery() error = %v", err)
 		}
 	})

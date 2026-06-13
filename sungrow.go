@@ -53,10 +53,10 @@ func main() {
 	for _, t := range inv.types {
 		switch t {
 		case "pv":
-			_ = inv.ws.Pv(pvKeys, inv.separator)
+			_ = inv.ws.Pv(pvKeys, pvValueKeys, inv.separator)
 			break
 		case "battery":
-			_ = inv.ws.Battery(batteryKeys, inv.separator)
+			_ = inv.ws.Battery(batteryKeys, nil, inv.separator)
 			break
 		}
 	}

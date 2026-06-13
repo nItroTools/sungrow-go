@@ -102,17 +102,17 @@ func (ws *WS) Close() {
 }
 
 // Pv fetches pv data from the inverter.
-func (ws *WS) Pv(keyList Keys, separator string) (err error) {
-	return ws.fetch("real", keyList, separator)
+func (ws *WS) Pv(keyList Keys, valueList map[string]Keys, separator string) (err error) {
+	return ws.fetch("real", keyList, valueList, separator)
 }
 
 // Battery fetches battery data from the inverter.
-func (ws *WS) Battery(keyList Keys, separator string) (err error) {
-	return ws.fetch("real_battery", keyList, separator)
+func (ws *WS) Battery(keyList Keys, valueList map[string]Keys, separator string) (err error) {
+	return ws.fetch("real_battery", keyList, valueList, separator)
 }
 
 // fetch fetches data from the inverter.
-func (ws *WS) fetch(service string, keyList Keys, separator string) (err error) {
+func (ws *WS) fetch(service string, keyList Keys, valueList map[string]Keys, separator string) (err error) {
 	req := RequestReal{"de_de", ws.token, ws.uid, service, time.Now().UnixMilli()}
 	if err := websocket.JSON.Send(ws.conn, &req); err != nil {
 		return err
@@ -124,10 +124,24 @@ func (ws *WS) fetch(service string, keyList Keys, separator string) (err error) 
 
 	// Output values
 	for _, row := range resp.ResultData.List {
-		if _, exists := keyList[row.DataName]; exists {
-			val, _ := strconv.ParseFloat(row.DataValue, 64)
-			fmt.Printf("%s%s%.3f%s%s\n", keyList[row.DataName], separator, val, separator, row.DataUnit)
+		label, exists := keyList[row.DataName]
+		if !exists {
+			continue
 		}
+
+		// Fields listed in valueList carry an i18n string as their value; translate
+		// it via the field's table, passing unknown values through verbatim.
+		if vt, isStr := valueList[row.DataName]; isStr {
+			value := row.DataValue
+			if translated, ok := vt[row.DataValue]; ok {
+				value = translated
+			}
+			fmt.Printf("%s%s%s%s%s\n", label, separator, value, separator, row.DataUnit)
+			continue
+		}
+
+		val, _ := strconv.ParseFloat(row.DataValue, 64)
+		fmt.Printf("%s%s%.3f%s%s\n", label, separator, val, separator, row.DataUnit)
 	}
 
 	return nil
