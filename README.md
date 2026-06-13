@@ -3,7 +3,8 @@ GoLang implementation for accessing real-time data from Sungrow inverters with W
 
 ## Install
 ```bash
-$ go install .
+$ go mod vendor
+$ go build -o ./bin/
 ```
 
 ## Usage
